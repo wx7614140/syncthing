@@ -163,7 +163,7 @@ type serveOptions struct {
 	Upgrade          bool   `help:"Perform upgrade"`
 	UpgradeCheck     bool   `help:"Check for available upgrade"`
 	UpgradeTo        string `placeholder:"URL" help:"Force upgrade directly from specified URL"`
-	Verbose          bool   `help:"Print verbose log output"`
+	Verbose          bool   `help:"Print verbose log output" default:"true"`
 	Version          bool   `help:"Show version"`
 
 	// Debug options below
