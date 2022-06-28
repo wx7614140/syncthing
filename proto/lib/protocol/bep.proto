@@ -144,9 +144,9 @@ enum OS {
 // POSIXPrivateData contains OS private data that is common for all
 // POSIX-like operating systems.
 message POSIXPrivateData {
-    int64  owner_uid  = 1;
+    uint32 owner_uid  = 1;
     string owner_name = 2;
-    int64  group_id   = 3;
+    uint32 group_id   = 3;
     string group_name = 4;
 }
 
