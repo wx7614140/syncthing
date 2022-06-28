@@ -2,10 +2,9 @@ package fs
 
 import (
 	"fmt"
-	"io/fs"
 	"os/user"
+	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/syncthing/syncthing/lib/protocol"
@@ -28,51 +27,52 @@ type POSIXOSDataSetter struct {
 	groups *nameCache
 }
 
-func (p *POSIXOSDataSetter) SetOSData(dst *protocol.FileInfo, fi fs.FileInfo) error {
-	sys, ok := fi.Sys().(*syscall.Stat_t)
-	if !ok {
-		return fmt.Errorf("unexpected underlying stat type: %T", sys)
-	}
+func (p *POSIXOSDataSetter) SetOSData(dst *protocol.FileInfo, fi FileInfo) error {
+	// Look up owner and group ID and names via the cache. We swallow errors
+	// in the name lookup, because the end result is anyway the empty
+	// string.
 
-	owner, err := p.users.getOrPopulate(sys.Uid, func(uid uint32) (string, error) {
-		user, err := user.LookupId(fmt.Sprintf("%d", uid))
+	ownerUID := fi.Owner()
+	ownerName, _ := p.users.getOrPopulate(ownerUID, func(uid int) (string, error) {
+		user, err := user.LookupId(strconv.Itoa(uid))
 		if err != nil {
 			return "", err
 		}
 		return user.Username, nil
 	})
 
-	group, err := p.users.getOrPopulate(sys.Uid, func(gid uint32) (string, error) {
-		group, err := user.LookupGroupId(fmt.Sprintf("%d", gid))
+	groupID := fi.Group()
+	groupName, _ := p.users.getOrPopulate(groupID, func(gid int) (string, error) {
+		group, err := user.LookupGroupId(strconv.Itoa(gid))
 		if err != nil {
 			return "", err
 		}
 		return group.Name, nil
 	})
 
+	// Create the POSIX private data structure and store it marshalled.
 	pd := &protocol.POSIXPrivateData{
-		OwnerUID:  sys.Uid,
-		OwnerName: owner,
-		GroupID:   sys.Gid,
-		GroupName: group,
+		OwnerUID:  ownerUID,
+		OwnerName: ownerName,
+		GroupID:   groupID,
+		GroupName: groupName,
 	}
 	bs, err := pd.Marshal()
 	if err != nil {
 		return fmt.Errorf("surprising error marshalling private data: %w", err)
 	}
-
 	dst.OsPrivateData[protocol.OsPosix] = bs
 	return nil
 }
 
 type nameCache struct {
-	names map[uint32]nameCacheEntry
+	names map[int]nameCacheEntry
 	mut   sync.RWMutex
 }
 
 func newNameCache() *nameCache {
 	return &nameCache{
-		names: make(map[uint32]nameCacheEntry),
+		names: make(map[int]nameCacheEntry),
 	}
 }
 
@@ -82,7 +82,7 @@ type nameCacheEntry struct {
 	when time.Time
 }
 
-func (cache *nameCache) getOrPopulate(id uint32, get func(uint32) (string, error)) (string, error) {
+func (cache *nameCache) getOrPopulate(id int, get func(int) (string, error)) (string, error) {
 	// In the best case we'll have a cache hit, optimize for that case by
 	// taking a read lock only and for a short while.
 	now := time.Now()
