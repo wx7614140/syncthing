@@ -108,6 +108,11 @@ message FileInfo {
     int32              modified_ns    = 11;
     int32              block_size     = 13 [(ext.goname) = "RawBlockSize"];
 
+    // OS private data; one entry for each operating system, with some
+    // generalized POSIX data in the entry for OS_POSIX. The actual type of
+    // each entry is message ${OS}PrivateData.
+    map<int32, bytes> os_private_data = 14 [(gogoproto.castkey) = "OS"];
+
     // The local_flags fields stores flags that are relevant to the local
     // host only. It is not part of the protocol, doesn't get sent or
     // received (we make sure to zero it), nonetheless we need it on our
@@ -128,6 +133,26 @@ enum FileInfoType {
     FILE_INFO_TYPE_SYMLINK_FILE      = 2 [deprecated = true];
     FILE_INFO_TYPE_SYMLINK_DIRECTORY = 3 [deprecated = true];
     FILE_INFO_TYPE_SYMLINK           = 4;
+}
+
+enum OS {
+    OS_UNSPECIFIED = 0; // not used
+    OS_POSIX       = 1;
+    OS_WINDOWS     = 2;
+}
+
+// POSIXPrivateData contains OS private data that is common for all
+// POSIX-like operating systems.
+message POSIXPrivateData {
+    int64  owner_uid  = 1;
+    string owner_name = 2;
+    int64  group_id   = 3;
+    string group_name = 4;
+}
+
+message WindowsPrivateData {
+    string owner_sid  = 1;
+    string owner_name = 2;
 }
 
 message BlockInfo {
