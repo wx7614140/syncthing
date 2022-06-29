@@ -108,10 +108,10 @@ message FileInfo {
     int32              modified_ns    = 11;
     int32              block_size     = 13 [(ext.goname) = "RawBlockSize"];
 
-    // OS private data; one entry for each operating system, with some
-    // generalized POSIX data in the entry for OS_POSIX. The actual type of
-    // each entry is message ${OS}OSData.
-    map<int32, bytes> os_private_data = 14 [(gogoproto.castkey) = "OS"];
+    // OS data; one entry for each operating system, with some generalized
+    // POSIX data in the entry for OS_POSIX. The actual type of each entry
+    // is message ${OS}OSData.
+    map<int32, bytes> os_data = 14 [(gogoproto.castkey) = "OS", (ext.goname) = "OSData"];
 
     // The local_flags fields stores flags that are relevant to the local
     // host only. It is not part of the protocol, doesn't get sent or
@@ -141,8 +141,8 @@ enum OS {
     OS_WINDOWS     = 2;
 }
 
-// POSIXOSData contains OS private data that is common for all
-// POSIX-like operating systems.
+// POSIXOSData contains OS data that is common for all POSIX-like operating
+// systems.
 message POSIXOSData {
     int32  owner_uid  = 1 [(ext.goname) = "OwnerUID"];
     string owner_name = 2;

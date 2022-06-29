@@ -567,18 +567,18 @@ func (w *walker) updateFileInfo(file, curFile protocol.FileInfo) protocol.FileIn
 	file.Version = curFile.Version.Update(w.ShortID)
 	file.ModifiedBy = w.ShortID
 	file.LocalFlags = w.LocalFlags
-	file.OsPrivateData = curFile.OsPrivateData
+	file.OSData = curFile.OSData
 	return file
 }
 
 func (w *walker) setOSData(f *protocol.FileInfo, info fs.FileInfo) {
 	pd, err := w.Filesystem.GetOSData(f, info)
 	if err == nil {
-		if f.OsPrivateData == nil {
-			f.OsPrivateData = make(map[protocol.OS][]byte)
+		if f.OSData == nil {
+			f.OSData = make(map[protocol.OS][]byte)
 		}
 		for k, v := range pd {
-			f.OsPrivateData[k] = v
+			f.OSData[k] = v
 		}
 	}
 }
