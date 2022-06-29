@@ -64,6 +64,9 @@ func (p *POSIXOSDataSetter) SetOSData(dst *protocol.FileInfo, fi FileInfo) error
 	if err != nil {
 		return fmt.Errorf("surprising error marshalling private data: %w", err)
 	}
+	if dst.OsPrivateData == nil {
+		dst.OsPrivateData = make(map[protocol.OS][]byte)
+	}
 	dst.OsPrivateData[protocol.OsPosix] = bs
 	return nil
 }

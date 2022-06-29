@@ -424,6 +424,7 @@ func (w *walker) walkDir(ctx context.Context, relPath string, info fs.FileInfo, 
 	f, _ := CreateFileInfo(info, relPath, nil)
 	f = w.updateFileInfo(f, curFile)
 	f.NoPermissions = w.IgnorePerms
+	w.osData.SetOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {
@@ -469,6 +470,7 @@ func (w *walker) walkSymlink(ctx context.Context, relPath string, info fs.FileIn
 	curFile, hasCurFile := w.CurrentFiler.CurrentFile(relPath)
 
 	f = w.updateFileInfo(f, curFile)
+	w.osData.SetOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {

@@ -178,6 +178,14 @@ func (f FileInfo) FileModifiedBy() ShortID {
 	return f.ModifiedBy
 }
 
+func (f FileInfo) LoadOSData(os OS, dst interface{ Unmarshal([]byte) error }) bool {
+	bs, ok := f.OsPrivateData[os]
+	if !ok {
+		return false
+	}
+	return dst.Unmarshal(bs) == nil
+}
+
 // WinsConflict returns true if "f" is the one to choose when it is in
 // conflict with "other".
 func WinsConflict(f, other FileIntf) bool {
