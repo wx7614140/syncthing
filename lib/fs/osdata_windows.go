@@ -42,8 +42,8 @@ func (p *WindowsOSDataGetter) GetOSData(cur *protocol.FileInfo, stat FileInfo) (
 		return nil, err
 	}
 
-	pd := &protocol.WindowsPrivateData{
-		OwnerSid: owner.String(),
+	pd := &protocol.WindowsOSData{
+		OwnerSID: owner.String(),
 	}
 
 	user, err := user.LookupId(owner.String())

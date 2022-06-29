@@ -574,7 +574,7 @@ func TestScanOwnershipPOSIX(t *testing.T) {
 			t.Errorf("expected %s, got %s", expected[i].name, files[i].Name)
 		}
 
-		var pd protocol.POSIXPrivateData
+		var pd protocol.POSIXOSData
 		if !files[i].LoadOSData(protocol.OsPosix, &pd) {
 			t.Fatal("failed to load POSIX data")
 		}
@@ -608,12 +608,12 @@ func TestScanOwnershipWindows(t *testing.T) {
 	t.Log(files[0])
 
 	// The file should have an owner SID and name set.
-	var pd protocol.WindowsPrivateData
+	var pd protocol.WindowsOSData
 	if !files[0].LoadOSData(protocol.OsWindows, &pd) {
 		t.Fatal("failed to load Windows data")
 	}
-	if !strings.HasPrefix(pd.OwnerSid, "S-1-") {
-		t.Errorf("expected SID to start with S-1-, got %s", pd.OwnerSid)
+	if !strings.HasPrefix(pd.OwnerSID, "S-1-") {
+		t.Errorf("expected SID to start with S-1-, got %s", pd.OwnerSID)
 	}
 	if pd.OwnerName == "" {
 		t.Errorf("expected owner name to be set")

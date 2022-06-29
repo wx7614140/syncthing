@@ -70,13 +70,13 @@ func (f FileInfo) String() string {
 func (f FileInfo) osPrivateDataString() string {
 	var parts []string
 	if bs, ok := f.OsPrivateData[OsPosix]; ok {
-		var pd POSIXPrivateData
+		var pd POSIXOSData
 		if err := pd.Unmarshal(bs); err == nil {
 			parts = append(parts, fmt.Sprintf("Posix{%v}", &pd))
 		}
 	}
 	if bs, ok := f.OsPrivateData[OsWindows]; ok {
-		var pd WindowsPrivateData
+		var pd WindowsOSData
 		if err := pd.Unmarshal(bs); err == nil {
 			parts = append(parts, fmt.Sprintf("Windows{%v}", &pd))
 		}

@@ -51,7 +51,7 @@ func (p *POSIXOSDataGetter) GetOSData(_ *protocol.FileInfo, stat FileInfo) (map[
 	})
 
 	// Create the POSIX private data structure and store it marshalled.
-	pd := &protocol.POSIXPrivateData{
+	pd := &protocol.POSIXOSData{
 		OwnerUID:  ownerUID,
 		OwnerName: ownerName,
 		GroupID:   groupID,

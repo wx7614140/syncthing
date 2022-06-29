@@ -110,7 +110,7 @@ message FileInfo {
 
     // OS private data; one entry for each operating system, with some
     // generalized POSIX data in the entry for OS_POSIX. The actual type of
-    // each entry is message ${OS}PrivateData.
+    // each entry is message ${OS}OSData.
     map<int32, bytes> os_private_data = 14 [(gogoproto.castkey) = "OS"];
 
     // The local_flags fields stores flags that are relevant to the local
@@ -141,17 +141,17 @@ enum OS {
     OS_WINDOWS     = 2;
 }
 
-// POSIXPrivateData contains OS private data that is common for all
+// POSIXOSData contains OS private data that is common for all
 // POSIX-like operating systems.
-message POSIXPrivateData {
+message POSIXOSData {
     int32  owner_uid  = 1 [(ext.goname) = "OwnerUID"];
     string owner_name = 2;
     int32  group_id   = 3 [(ext.goname) = "GroupID"];
     string group_name = 4;
 }
 
-message WindowsPrivateData {
-    string owner_sid  = 1;
+message WindowsOSData {
+    string owner_sid  = 1 [(ext.goname) = "OwnerSID"];
     string owner_name = 2;
 }
 
