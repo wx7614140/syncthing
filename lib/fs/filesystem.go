@@ -61,6 +61,8 @@ type Filesystem interface {
 	Options() []Option
 	SameFile(fi1, fi2 FileInfo) bool
 
+	OSDataGetter
+
 	// Used for unwrapping things
 	underlying() (Filesystem, bool)
 	wrapperType() filesystemWrapperType

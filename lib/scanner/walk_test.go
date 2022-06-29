@@ -18,6 +18,7 @@ import (
 	"runtime"
 	rdebug "runtime/debug"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 
@@ -543,7 +544,9 @@ func TestWalkReceiveOnly(t *testing.T) {
 	}
 }
 
-func TestScanOwnership(t *testing.T) {
+func TestScanOwnershipPOSIX(t *testing.T) {
+	// This test works on all operating systems because the FakeFS is always POSIXy.
+
 	fakeFS := fs.NewFilesystem(fs.FilesystemTypeFake, "TestScanOwnership")
 	current := make(fakeCurrentFiler)
 
@@ -573,7 +576,7 @@ func TestScanOwnership(t *testing.T) {
 
 		var pd protocol.POSIXPrivateData
 		if !files[i].LoadOSData(protocol.OsPosix, &pd) {
-			t.Error("failed to load posix data")
+			t.Fatal("failed to load POSIX data")
 		}
 		if pd.OwnerUID != expected[i].uid {
 			t.Errorf("expected %d, got %d", expected[i].uid, pd.OwnerUID)
@@ -581,6 +584,39 @@ func TestScanOwnership(t *testing.T) {
 		if pd.GroupID != expected[i].gid {
 			t.Errorf("expected %d, got %d", expected[i].gid, pd.GroupID)
 		}
+	}
+}
+
+func TestScanOwnershipWindows(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("This test only works on Windows")
+	}
+
+	testFS := fs.NewFilesystem(fs.FilesystemTypeBasic, t.TempDir())
+	current := make(fakeCurrentFiler)
+
+	fd, err := testFS.Create("user-owned")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fd.Close()
+
+	files := walkDir(testFS, ".", current, nil, 0)
+	if len(files) != 1 {
+		t.Fatalf("expected %d items, not %d", 1, len(files))
+	}
+	t.Log(files[0])
+
+	// The file should have an owner SID and name set.
+	var pd protocol.WindowsPrivateData
+	if !files[0].LoadOSData(protocol.OsWindows, &pd) {
+		t.Fatal("failed to load Windows data")
+	}
+	if !strings.HasPrefix(pd.OwnerSid, "S-1-") {
+		t.Errorf("expected SID to start with S-1-, got %s", pd.OwnerSid)
+	}
+	if pd.OwnerName == "" {
+		t.Errorf("expected owner name to be set")
 	}
 }
 

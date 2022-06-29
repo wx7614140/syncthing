@@ -60,6 +60,7 @@ type fakeFS struct {
 	insens      bool
 	withContent bool
 	latency     time.Duration
+	OSDataGetter
 }
 
 type fakeFSCounters struct {
@@ -109,6 +110,7 @@ func newFakeFilesystem(rootURI string, _ ...Option) *fakeFS {
 			children:  make(map[string]*fakeEntry),
 		},
 	}
+	fs.OSDataGetter = NewPOSIXDataGetter(fs)
 
 	files, _ := strconv.Atoi(params.Get("files"))
 	maxsize, _ := strconv.Atoi(params.Get("maxsize"))

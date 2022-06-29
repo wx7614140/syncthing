@@ -83,7 +83,6 @@ func WalkWithoutHashing(ctx context.Context, cfg Config) chan ScanResult {
 func newWalker(cfg Config) *walker {
 	w := &walker{
 		Config: cfg,
-		osData: fs.NewOSDataSetter(),
 	}
 
 	if w.CurrentFiler == nil {
@@ -107,7 +106,6 @@ var (
 
 type walker struct {
 	Config
-	osData fs.OSDataSetter
 }
 
 // Walk returns the list of files found in the local folder by scanning the
@@ -389,7 +387,7 @@ func (w *walker) walkRegular(ctx context.Context, relPath string, info fs.FileIn
 	f = w.updateFileInfo(f, curFile)
 	f.NoPermissions = w.IgnorePerms
 	f.RawBlockSize = blockSize
-	w.osData.SetOSData(&f, info)
+	w.setOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {
@@ -424,7 +422,7 @@ func (w *walker) walkDir(ctx context.Context, relPath string, info fs.FileInfo, 
 	f, _ := CreateFileInfo(info, relPath, nil)
 	f = w.updateFileInfo(f, curFile)
 	f.NoPermissions = w.IgnorePerms
-	w.osData.SetOSData(&f, info)
+	w.setOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {
@@ -470,7 +468,7 @@ func (w *walker) walkSymlink(ctx context.Context, relPath string, info fs.FileIn
 	curFile, hasCurFile := w.CurrentFiler.CurrentFile(relPath)
 
 	f = w.updateFileInfo(f, curFile)
-	w.osData.SetOSData(&f, info)
+	w.setOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {
@@ -571,6 +569,18 @@ func (w *walker) updateFileInfo(file, curFile protocol.FileInfo) protocol.FileIn
 	file.LocalFlags = w.LocalFlags
 	file.OsPrivateData = curFile.OsPrivateData
 	return file
+}
+
+func (w *walker) setOSData(f *protocol.FileInfo, info fs.FileInfo) {
+	pd, err := w.Filesystem.GetOSData(f, info)
+	if err == nil {
+		if f.OsPrivateData == nil {
+			f.OsPrivateData = make(map[protocol.OS][]byte)
+		}
+		for k, v := range pd {
+			f.OsPrivateData[k] = v
+		}
+	}
 }
 
 func handleError(ctx context.Context, context, path string, err error, finishedChan chan<- ScanResult) {

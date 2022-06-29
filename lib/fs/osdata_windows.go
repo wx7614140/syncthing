@@ -1,41 +1,61 @@
 package fs
 
 import (
+	"fmt"
+	"os/user"
+
 	"github.com/syncthing/syncthing/lib/protocol"
 	"golang.org/x/sys/windows"
 )
 
-func NewOSDataSetter() OSDataSetter {
-	return &WindowsOSDataSetter{}
+func NewOSDataGetter(underlying Filesystem) OSDataGetter {
+	return &WindowsOSDataGetter{fs: underlying}
 }
 
-type WindowsOSDataSetter struct {
+type WindowsOSDataGetter struct {
+	fs Filesystem
 }
 
-func (p *WindowsOSDataSetter) SetOSData(dst *protocol.FileInfo, fi FileInfo) error {
-	hdl, err := windows.Open(dst.Name, windows.O_RDONLY, 0)
+func (p *WindowsOSDataGetter) GetOSData(cur *protocol.FileInfo, stat FileInfo) (map[protocol.OS][]byte, error) {
+	// The underlying filesystem must be a BasicFilesystem.
+	basic, ok := p.fs.(*BasicFilesystem)
+	if !ok {
+		return nil, fmt.Errorf("underlying filesystem is not a BasicFilesystem")
+	}
+
+	rootedName, err := basic.rooted(cur.Name)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	hdl, err := windows.Open(rootedName, windows.O_RDONLY, 0)
+	if err != nil {
+		return nil, err
 	}
 	defer windows.Close(hdl)
 
 	sd, err := windows.GetSecurityInfo(hdl, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	owner, _, err := sd.Owner()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	pd := &protocol.WindowsPrivateData{
 		OwnerSid: owner.String(),
 	}
-	bs, _ := pd.Marshal()
-	if dst.OsPrivateData == nil {
-		dst.OsPrivateData = make(map[protocol.OS][]byte)
-	}
-	dst.OsPrivateData[protocol.OsWindows] = bs
 
-	return nil
+	user, err := user.LookupId(owner.String())
+	if err == nil {
+		pd.OwnerName = user.Username
+	}
+
+	bs, err := pd.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("surprising error marshalling private data: %w", err)
+	}
+	return map[protocol.OS][]byte{
+		protocol.OsWindows: bs,
+	}, nil
 }

@@ -4,9 +4,9 @@ import (
 	"github.com/syncthing/syncthing/lib/protocol"
 )
 
-type OSDataSetter interface {
+type OSDataGetter interface {
 	// SetOSData sets the operating system private data for the current
 	// operating system onto the destination FileInfo, and leaves privata
 	// data for other OSes untouched.
-	SetOSData(dst *protocol.FileInfo, fi FileInfo) error
+	GetOSData(cur *protocol.FileInfo, stat FileInfo) (map[protocol.OS][]byte, error)
 }

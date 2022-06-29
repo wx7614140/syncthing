@@ -9,6 +9,8 @@ package fs
 import (
 	"context"
 	"time"
+
+	"github.com/syncthing/syncthing/lib/protocol"
 )
 
 type errorFilesystem struct {
@@ -51,6 +53,9 @@ func (fs *errorFilesystem) Options() []Option {
 func (fs *errorFilesystem) SameFile(fi1, fi2 FileInfo) bool { return false }
 func (fs *errorFilesystem) Watch(path string, ignore Matcher, ctx context.Context, ignorePerms bool) (<-chan Event, <-chan error, error) {
 	return nil, nil, fs.err
+}
+func (fs *errorFilesystem) GetOSData(cur *protocol.FileInfo, stat FileInfo) (map[protocol.OS][]byte, error) {
+	return nil, fs.err
 }
 
 func (fs *errorFilesystem) underlying() (Filesystem, bool) {
