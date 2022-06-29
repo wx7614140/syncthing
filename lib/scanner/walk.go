@@ -81,7 +81,10 @@ func WalkWithoutHashing(ctx context.Context, cfg Config) chan ScanResult {
 }
 
 func newWalker(cfg Config) *walker {
-	w := &walker{cfg}
+	w := &walker{
+		Config: cfg,
+		osData: fs.NewOSDataSetter(),
+	}
 
 	if w.CurrentFiler == nil {
 		w.CurrentFiler = noCurrentFiler{}
@@ -104,6 +107,7 @@ var (
 
 type walker struct {
 	Config
+	osData fs.OSDataSetter
 }
 
 // Walk returns the list of files found in the local folder by scanning the
@@ -385,6 +389,7 @@ func (w *walker) walkRegular(ctx context.Context, relPath string, info fs.FileIn
 	f = w.updateFileInfo(f, curFile)
 	f.NoPermissions = w.IgnorePerms
 	f.RawBlockSize = blockSize
+	w.osData.SetOSData(&f, info)
 
 	if hasCurFile {
 		if curFile.IsEquivalentOptional(f, w.ModTimeWindow, w.IgnorePerms, true, w.LocalFlags) {
@@ -550,7 +555,9 @@ func (w *walker) normalizePath(path string, info fs.FileInfo) (normPath string, 
 	return "", errUTF8Conflict
 }
 
-// updateFileInfo updates walker specific members of protocol.FileInfo that do not depend on type
+// updateFileInfo updates walker specific members of protocol.FileInfo that
+// do not depend on type, and things that should be preserved from the
+// previous version of the FileInfp.
 func (w *walker) updateFileInfo(file, curFile protocol.FileInfo) protocol.FileInfo {
 	if file.Type == protocol.FileInfoTypeFile && runtime.GOOS == "windows" {
 		// If we have an existing index entry, copy the executable bits
@@ -560,6 +567,7 @@ func (w *walker) updateFileInfo(file, curFile protocol.FileInfo) protocol.FileIn
 	file.Version = curFile.Version.Update(w.ShortID)
 	file.ModifiedBy = w.ShortID
 	file.LocalFlags = w.LocalFlags
+	file.OsPrivateData = curFile.OsPrivateData
 	return file
 }
 
