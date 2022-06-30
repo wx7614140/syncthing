@@ -20,7 +20,7 @@ type errorFilesystem struct {
 }
 
 func (fs *errorFilesystem) Chmod(name string, mode FileMode) error { return fs.err }
-func (fs *errorFilesystem) Lchown(name string, uid, gid int) error { return fs.err }
+func (fs *errorFilesystem) Lchown(name, uid, gid string) error     { return fs.err }
 func (fs *errorFilesystem) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return fs.err
 }

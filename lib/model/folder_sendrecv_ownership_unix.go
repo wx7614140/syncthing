@@ -36,5 +36,5 @@ func (f *sendReceiveFolder) syncOwnership(file *protocol.FileInfo, path string) 
 		}
 	}
 
-	return f.mtimefs.Lchown(path, uid, gid)
+	return f.mtimefs.Lchown(path, strconv.Itoa(uid), strconv.Itoa(gid))
 }

@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -2098,7 +2099,7 @@ func (f *sendReceiveFolder) copyOwnershipFromParent(path string) error {
 	if err != nil {
 		return errors.Wrap(err, "copy owner from parent")
 	}
-	if err := f.mtimefs.Lchown(path, info.Owner(), info.Group()); err != nil {
+	if err := f.mtimefs.Lchown(path, strconv.Itoa(info.Owner()), strconv.Itoa(info.Group())); err != nil {
 		return errors.Wrap(err, "copy owner from parent")
 	}
 	return nil

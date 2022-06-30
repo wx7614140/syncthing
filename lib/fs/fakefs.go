@@ -222,7 +222,7 @@ func (fs *fakeFS) Chmod(name string, mode FileMode) error {
 	return nil
 }
 
-func (fs *fakeFS) Lchown(name string, uid, gid int) error {
+func (fs *fakeFS) Lchown(name, uid, gid string) error {
 	fs.mut.Lock()
 	defer fs.mut.Unlock()
 	fs.counters.Lchown++
@@ -231,8 +231,8 @@ func (fs *fakeFS) Lchown(name string, uid, gid int) error {
 	if entry == nil {
 		return os.ErrNotExist
 	}
-	entry.uid = uid
-	entry.gid = gid
+	entry.uid, _ = strconv.Atoi(uid)
+	entry.gid, _ = strconv.Atoi(gid)
 	return nil
 }
 

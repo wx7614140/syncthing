@@ -552,9 +552,9 @@ func TestScanOwnershipPOSIX(t *testing.T) {
 
 	fakeFS.Create("root-owned")
 	fakeFS.Create("user-owned")
-	fakeFS.Lchown("user-owned", 1234, 5678)
+	fakeFS.Lchown("user-owned", "1234", "5678")
 	fakeFS.Mkdir("user-owned-dir", 0755)
-	fakeFS.Lchown("user-owned-dir", 2345, 6789)
+	fakeFS.Lchown("user-owned-dir", "2345", "6789")
 
 	expected := []struct {
 		name     string

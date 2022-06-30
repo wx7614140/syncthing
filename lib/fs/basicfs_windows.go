@@ -17,6 +17,8 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 var errNotSupported = errors.New("symlinks not supported")
@@ -150,6 +152,26 @@ func (f *BasicFilesystem) Roots() ([]string, error) {
 	}
 
 	return drives, nil
+}
+
+func (f *BasicFilesystem) Lchown(name, uid, _ string) error {
+	name, err := f.rooted(name)
+	if err != nil {
+		return err
+	}
+
+	hdl, err := windows.Open(name, windows.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer windows.Close(hdl)
+
+	ownerSID, err := syscall.StringToSid(uid)
+	if err != nil {
+		return err
+	}
+
+	return windows.SetSecurityInfo(hdl, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION, (*windows.SID)(ownerSID), nil, nil, nil)
 }
 
 // unrootedChecked returns the path relative to the folder root (same as
