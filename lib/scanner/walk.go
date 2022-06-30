@@ -81,9 +81,7 @@ func WalkWithoutHashing(ctx context.Context, cfg Config) chan ScanResult {
 }
 
 func newWalker(cfg Config) *walker {
-	w := &walker{
-		Config: cfg,
-	}
+	w := &walker{cfg}
 
 	if w.CurrentFiler == nil {
 		w.CurrentFiler = noCurrentFiler{}
