@@ -45,6 +45,7 @@ type FileIntf interface {
 	FilePermissions() uint32
 	FileModifiedBy() ShortID
 	ModTime() time.Time
+	LoadOSData(os OS, dst interface{ Unmarshal([]byte) error }) bool
 }
 
 func (m Hello) Magic() uint32 {

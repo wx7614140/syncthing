@@ -1816,6 +1816,18 @@ func fileIntfJSONMap(f protocol.FileIntf) map[string]interface{} {
 		"version":       jsonVersionVector(f.FileVersion()),
 		"localFlags":    f.FileLocalFlags(),
 	}
+
+	osData := make(map[string]interface{})
+	var pd protocol.POSIXOSData
+	if f.LoadOSData(protocol.OsPosix, &pd) {
+		osData["posix"] = &pd
+	}
+	var wd protocol.WindowsOSData
+	if f.LoadOSData(protocol.OsWindows, &wd) {
+		osData["windows"] = &wd
+	}
+	out["osData"] = osData
+
 	if f.HasPermissionBits() {
 		out["permissions"] = fmt.Sprintf("%#o", f.FilePermissions())
 	}

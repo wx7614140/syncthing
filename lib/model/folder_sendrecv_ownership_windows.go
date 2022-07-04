@@ -7,6 +7,7 @@
 package model
 
 import (
+	"fmt"
 	"os/user"
 	"strings"
 
@@ -15,7 +16,7 @@ import (
 
 func (f *sendReceiveFolder) syncOwnership(file *protocol.FileInfo, path string) error {
 	var pd protocol.WindowsOSData
-	if !file.LoadOSData(protocol.OsWindows, &pd) {
+	if !file.LoadOSData(protocol.OsWindows, &pd) || pd.OwnerName == "" {
 		// No owner data, nothing to do
 		return nil
 	}
@@ -27,19 +28,29 @@ func (f *sendReceiveFolder) syncOwnership(file *protocol.FileInfo, path string) 
 	// and it differs between two boxes. If that also fails, we'll just use
 	// the SID and hope for the best.
 
-	ownerSID := pd.OwnerSID
-	if pd.OwnerName != "" {
-		us, err := user.Lookup(pd.OwnerName)
-		if err != nil {
+	l.Infoln("Owner name for", path, "is", pd.OwnerName)
+	if pd.OwnerIsGroup {
+		if _, err := user.LookupGroup(pd.OwnerName); err == nil {
+			return f.mtimefs.Lchown(path, "", pd.OwnerName)
+		} else {
 			parts := strings.Split(pd.OwnerName, "\\")
 			if len(parts) == 2 {
-				us, err = user.Lookup(parts[1])
+				if _, err := user.Lookup(parts[1]); err == nil {
+					return f.mtimefs.Lchown(path, "", parts[1])
+				}
 			}
 		}
-		if err == nil {
-			ownerSID = us.Uid
+	} else {
+		if _, err := user.Lookup(pd.OwnerName); err == nil {
+			return f.mtimefs.Lchown(path, pd.OwnerName, "")
+		} else {
+			parts := strings.Split(pd.OwnerName, "\\")
+			if len(parts) == 2 {
+				if _, err := user.Lookup(parts[1]); err == nil {
+					return f.mtimefs.Lchown(path, parts[1], "")
+				}
+			}
 		}
 	}
-
-	return f.mtimefs.Lchown(path, ownerSID, "")
+	return fmt.Errorf("failed to lookup %q", pd.OwnerName)
 }

@@ -154,7 +154,7 @@ func (f *BasicFilesystem) Roots() ([]string, error) {
 	return drives, nil
 }
 
-func (f *BasicFilesystem) Lchown(name, uid, _ string) error {
+func (f *BasicFilesystem) Lchown(name, uid, gid string) error {
 	name, err := f.rooted(name)
 	if err != nil {
 		return err
@@ -166,12 +166,22 @@ func (f *BasicFilesystem) Lchown(name, uid, _ string) error {
 	}
 	defer windows.Close(hdl)
 
-	ownerSID, err := syscall.StringToSid(uid)
-	if err != nil {
-		return err
+	var si windows.SECURITY_INFORMATION
+	var ownerSID, groupSID *syscall.SID
+	if uid != "" {
+		ownerSID, err = syscall.StringToSid(uid)
+		if err == nil {
+			si |= windows.OWNER_SECURITY_INFORMATION
+		}
+	}
+	if gid != "" {
+		groupSID, err = syscall.StringToSid(uid)
+		if err == nil {
+			si |= windows.GROUP_SECURITY_INFORMATION
+		}
 	}
 
-	return windows.SetSecurityInfo(hdl, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION, (*windows.SID)(ownerSID), nil, nil, nil)
+	return windows.SetSecurityInfo(hdl, windows.SE_FILE_OBJECT, si, (*windows.SID)(ownerSID), (*windows.SID)(groupSID), nil, nil)
 }
 
 // unrootedChecked returns the path relative to the folder root (same as
